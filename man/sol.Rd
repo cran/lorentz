@@ -8,10 +8,15 @@
 \description{Getting and setting the speed of light}
 \usage{
 sol(c)
-eta()
+eta(downstairs=TRUE)
 }
 \arguments{
-  \item{c}{Scalar, speed of light.  If missing, return the speed of light}
+  \item{c}{Scalar, speed of light.  If missing, return the speed of
+    light}
+  \item{downstairs}{Boolean, with default \code{TRUE} meaning to return
+    the covariant metric tensor \eqn{g_{ij}{g_ij}} with two downstairs
+      indices, and \code{FALSE} meaning to return the contraviariant
+      version \eqn{g^{ij}}{g^ij} with two upstairs indices}
 }
 \details{
 
@@ -39,6 +44,11 @@ Note that the top-left element of \code{eta()} is \eqn{-c^2}, not
   
 }
 \author{Robin K. S. Hankin}
+\note{
+  Typing \dQuote{\code{sol(299792458)}} is a lot easier than typing
+  \dQuote{code{options("c"=299792458)}}, which is why the package uses
+  the idiom that it does.
+}
 \examples{
 
 sol()                          # returns current speed of light

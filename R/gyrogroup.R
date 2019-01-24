@@ -4,16 +4,35 @@
     if(!is.null(jj)){
       return(jj)
     } else {
-      return(1)
+      return(invisible(1))
     }
   } else { # set SOL
     options("c" = c)
-    return(c)
+    return(invisible(c))
   }
 }
 
-`eta` <- function(){
-  diag(c(-sol()^2,1,1,1))
+`coordnames` <- function(...){c("t","x","y","z")}
+
+`flob` <- function(x){
+  if(all(dim(x)==c(4,4))){
+    jj <- coordnames()
+  } else if(all(dim(x)==c(3,3))){
+    jj <- coordnames()[-1]
+  } else {
+    stop("matrix must be either 3x3 or 4x4")
+  }
+  rownames(x) <- jj
+  colnames(x) <- jj
+  return(x)
+}
+
+`eta` <- function(downstairs=TRUE){
+  if(downstairs){
+    return(diag(c(-sol()^2,1,1,1)))
+    } else {
+      return(diag(c(-1/sol()^2,1,1,1)))
+    }
 }
 
 `as.3vel` <- function(x){
@@ -38,7 +57,7 @@
   } else {
     stop("should have 3 or 4 columns")
   }
-  class(out) <- c("3vel","vel") # this is the only place where the class is set
+  class(out) <- c("3vel","vec") # this is the only place where the class is set
   return(out)
 }
 
@@ -57,23 +76,23 @@
 `print.3vel` <- function(x, ...){
   x <- unclass(x)
   if(is.null(colnames(x)) & ncol(x)==3){
-    colnames(x) <- c("x","y","z")
+    colnames(x) <- coordnames()[-1]
   }
   return(invisible(print(x)))
 }
 
 `print.4vel` <- function(x, ...){
-  x <- unclass(x)
-  if(is.null(colnames(x)) & ncol(x)==3){
-    colnames(x) <- c("t","x","y","z")
+  x <- rbind(unclass(x))
+  if(is.null(colnames(x)) & ncol(x)==4){ 
+    colnames(x) <- coordnames()
   }
   return(invisible(print(x)))
 }
 
-`length.vel` <- function(x){nrow(x)}
-`names.vel` <- function(x){rownames(x)}
+`length.vec` <- function(x){nrow(x)}
+`names.vec` <- function(x){rownames(x)}
 
-`names<-.vel` <- function(x,value){
+`names<-.vec` <- function(x,value){
   rownames(x) <- value
   return(x)
 }
@@ -90,6 +109,8 @@
   }
   return(as.3vel(out))
 }
+
+r4vel <- function(...){as.4vel(r3vel(...))}
 
 `massage3` <- function(u,v){
   lu <- length(u)
@@ -150,6 +171,10 @@
   return(-expm1(jj)/exp(jj))
 }
 
+`gam_ur` <- function(d){  # d=1-speed, d<<1
+  d <- d/sol()
+  return(1/sqrt(2*d-d^2))
+}
 `add3` <- function(u,v){  # eq 2
   jj <- massage3(u,v)
   u <- jj[[1]]
@@ -182,29 +207,27 @@
   return(out)
 }
 
-`[.vel` <- function(x,i,j,...){
+`[.vec` <- function(x,i,j,...){
+    a <- class(x)
     x <- unclass(x)
     if(missing(i) & !missing(j)){ # x[,j]
       return(x[,j,drop=FALSE])
     } else if(!missing(i) & !missing(j)){  # x[i,j]
-      return(x[i,j,drop=FALSE])
+      out <- x[i,j,drop=FALSE]
     } else if(missing(i) & missing(j)){  # x[]
-      return(x)  # NB unclassed
+      out <- x  # NB unclassed
     } else if(!missing(i) & missing(j)){  # meat of function: idiom x[i]; x[i,]
-      x <- x[i,,drop=FALSE]
-      if(ncol(x)==3){
-        return(as.3vel(x))
-      } else if(ncol(x)==4){
-        return(as.4vel(x))
-      } else {
-        stop("this should not happen")
-      }
+      out <- x[i,,drop=FALSE]
+      if(ncol(out)==3){return(as.3vel(out))}
     } else {
       stop("this cannot happen")
     }
+    class(out) <- a
+    return(out)
 }
 
-`[<-.vel` <- function(x,i,j,value){
+`[<-.vec` <- function(x,i,j,value){
+    a <- class(x)
     x <- unclass(x)
     if(missing(i) & missing(j)){  # x[]
         x[] <- value
@@ -226,6 +249,7 @@
     } else {
         stop("this cannot happen")
     }
+    class(x) <- a
     return(x)
 }
   
@@ -235,6 +259,15 @@
   v <- jj[[2]]
   rowSums(unclass(u)!=unclass(v))==0
   }
+
+`Ops.4vel` <- function(e1,e2){
+  if(nargs() == 1){
+    stop("Unary operator '", .Generic, "' is not implemented for 4vel objects")
+  } else {
+    stop("Operator '", .Generic, "' is not implemented for 4vel objects.
+  Four velocities do not constitute a vector space.")
+  }
+}
 
 `Ops.3vel` <- function(e1,e2){
   f <- function(...){stop("odd---neither argument has class 3vel?")}
@@ -329,8 +362,8 @@
       stop("not recognised")
     }
   
-  colnames(out) <- c("t","x","y","z")
-  class(out) <- c("4vel","vel")  # this is the only place class 4vel is assigned
+  colnames(out) <- coordnames()
+  class(out) <- c("4vel","vec")  # this is the only place class 4vel is assigned
   return(out)
 }
 
@@ -343,16 +376,17 @@
   }
 }
 
-`inner4` <- function(U){
-  quad.tdiag(eta(),U)
+`inner4` <- function(U,V=U){
+  quad.3tdiag(eta(),unclass(U),unclass(V))
 }
 
 `is.consistent.4vel` <- function(U,give=FALSE, TOL=1e-10){
+
     out <- (inner4(U) + sol()^2)/sol()^2
     if(give){
         return(out)
     } else {
-        return(out<TOL)
+        return(out<TOL*sol()^2)
     }
 }
 
@@ -361,7 +395,7 @@
   if(give){
     return(out)
   } else {
-    return(all(abs(out-eta())<TOL))
+    return(all(abs(out-eta())<TOL*sol()^2))
   }
 }
 
@@ -457,10 +491,9 @@
   return(from + tee*(-from+to))
 }
 
-
-
 `boost` <- function(u){  # v = (u,v,w)
   u <- as.3vel(u)
+  if(is.infinite(sol())){return(flob(rbind(c(1,0,0,0),cbind(t(-u),diag(3)))))}
   g <- gam(u)  
   u <- as.vector(u)/sol()  # convert to c=1 units (NB previous line needs sol())
   jj <- -g*u
@@ -470,8 +503,8 @@
   ## convert units back to SI or whatever:
   out <- quad.3form(out,diag(c(1/sol(),1,1,1)),diag(c(sol(),1,1,1)))
 
-  rownames(out) <- c("t","x","y","z")
-  colnames(out) <- c("t","x","y","z")
+  rownames(out) <- coordnames()
+  colnames(out) <- coordnames()
 
   return(out)
  }
@@ -486,10 +519,10 @@
     return(out)
   }
 }
-
+   
 `pureboost` <- function(L){
   jj <- eigen(crossprod(L))
-  quad.tform(sqrt(diag(jj$values)),jj$vectors)
+  flob(quad.tform(sqrt(diag(jj$values)),jj$vectors))
 }
 
-`orthog` <- function(L){ tcrossprod(L,solve(pureboost(L))) } 
+`orthog` <- function(L){flob(tcrossprod(L,solve(pureboost(L))))} 

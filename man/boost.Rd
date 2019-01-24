@@ -121,21 +121,29 @@ orthog(boost(u) \%*\% boost(v)) - rot(u,v,FALSE)  # should be small
 pureboost(boost(v) \%*\% boost(u)) - boost(u+v)   # should be small
 
 
-
 ## Define a random-ish Lorentz transform
 L <- boost(r3vel(1)) \%*\% boost(r3vel(1)) \%*\% boost(r3vel(1))
 
 ## check it:
 
+
+\dontrun{   # needs emulator package
+quad.form(eta(),L)  # should be eta()
+}
+
+## More concisely:
 is.consistent.boost(L)     # should be TRUE
-## Decompose it:
+
+## Decompose L into a rotation and a pure boost:
 U <- orthog(L)
 P <- pureboost(L)
 
 L - U \%*\% P              # should be small (L = UP)
 crossprod(U)               # should be identity (U is orthogonal)
 P - t(P)                   # should be small (P is symmetric)
-is.consistent.4vel(P[,1])  # should be TRUE 
+
+## First row of P should be a consistent 4-velocity:
+is.consistent.4vel(as.4vel(P[,1]))
 
 
 
