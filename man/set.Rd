@@ -3,9 +3,13 @@
 \alias{transform_dd}
 \alias{transform_ud}
 \alias{transform_uu}
+\alias{raise}
+\alias{lower}
 \alias{perfectfluid}
 \alias{dust}
 \alias{photongas}
+\alias{SET}
+\alias{stress}
 \alias{stress-energy}
 \alias{stress-energy-tensor}
 \alias{energy-momentum}
@@ -20,16 +24,18 @@ photongas(rho,u=0)
 transform_dd(TT, B)
 transform_ud(TT, B)
 transform_uu(TT, B)
+raise(TT)
+lower(TT)
 }
 
 \arguments{
   \item{TT}{A second-rank tensor with indices either
-  downstairs-downstairs, downstairs-upstairs, or upstairs-upstairs}
-\item{B}{A boost matrix}
-\item{rho,p,u}{Density, pressure, and four-velocity of the dust}
+    downstairs-downstairs, downstairs-upstairs, or upstairs-upstairs}
+  \item{B}{A boost matrix}
+  \item{rho,p,u}{Density, pressure, and four-velocity of the dust}
 }
 \details{
-
+  
   Function \code{perfectfluid()} returns the stress-energy tensor, with
   two upstairs indices, for a perfect fluid with the conditions
   specified.  No checking for physical reasonableness (eg the weak
@@ -46,6 +52,11 @@ transform_uu(TT, B)
   downstairs (covariant).  The stress-energy tensor is usually written
   with two upstairs indices, so use \code{transform_uu()} to transform
   it.
+
+  Function \code{lower()} lowers both indices of a tensor with two
+  upstairs indices.  Function \code{raise()} raises two downstairs
+  indices.  These two functions are identical; the Minkowski tensor is
+  symmetrical and equal to its own inverse.
 
 }
 \author{Robin K. S. Hankin}
