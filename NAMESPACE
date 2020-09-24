@@ -1,9 +1,10 @@
 exportPattern("^[[:alpha:]]+")
+exportPattern("4vel")
 
-importFrom("stats", "runif")
+importFrom("stats", "runif", "rnorm")
 importFrom("emulator","quad.tdiag","quad.tform", "quad.form","quad.3form", "quad.3tdiag")
 importFrom("graphics", "arrows", "legend", "plot", "points")
-
+importFrom("magic","adiag")
 import("magrittr")
 
 importFrom("tensor","tensor")
@@ -19,7 +20,8 @@ S3method("print"  , "3vel")
 S3method("print"  , "4vel")
 S3method("print"  , "4mom")
 S3method("["      ,  "vec")
-S3method("[<-"    ,  "vec")
+S3method("[<-"    , "3vel")
+S3method("[<-"    , "4vel")
 S3method("gam"    , "3vel")
 S3method("gam"    , "4vel")
 S3method("gamm1"  , "3vel")
@@ -30,6 +32,8 @@ S3method("speed"  , "3vel")
 S3method("speed"  , "4vel")
 
 
+S3method("as.matrix", "3vel")
+S3method("as.matrix", "4vel")
 
 S3method("gam"    , "default")
 S3method("gamm1"  , "default")

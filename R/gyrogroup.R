@@ -4,11 +4,14 @@
     if(!is.null(jj)){
       return(jj)
     } else {
-      return(invisible(1))
+      return(1)
     }
   } else { # set SOL
     options("c" = c)
-    return(invisible(c))
+    if(isTRUE(getOption("showSOL"))){
+        options("prompt" = paste(c, "> "))
+    }
+    return(c)
   }
 }
 
@@ -112,6 +115,12 @@
 
 r4vel <- function(...){as.4vel(r3vel(...))}
 
+`rboost` <- function(r=NA){
+  O <- svd(matrix(rnorm(9),3,3))$v
+  if(det(O)<0){O <- -O} # det(O) either 1 or -1
+  crossprod(adiag(1,O),boost(r3vel(1,r=r)))
+}
+
 `massage3` <- function(u,v){
   lu <- length(u)
   lv <- length(v)
@@ -171,7 +180,7 @@ r4vel <- function(...){as.4vel(r3vel(...))}
   return(-expm1(jj)/exp(jj))
 }
 
-`gam_ur` <- function(d){  # d=1-speed, d<<1
+`gam_ur` <- function(d){  # d=1-speed, d<<c
   d <- d/sol()
   return(1/sqrt(2*d-d^2))
 }
@@ -190,10 +199,12 @@ r4vel <- function(...){as.4vel(r3vel(...))}
 `neg3` <- function(u){as.3vel(-unclass(u))}
 
 `dot3` <- function(v,r){
+  if(is.infinite(sol())){ return(as.3vel(unclass(v)*r)) }
     jj <- cbind(seq_along(v),seq_along(r))
     v <- v[jj[,1]]
     r <- r[jj[,2]]
-  
+
+
     vc <- sqrt(prod3(v))/sol()
     out <- sweep(unclass(v),1,tanh(r*atanh(vc))/vc,"*")
     out[vc==0,] <- 0
@@ -207,17 +218,17 @@ r4vel <- function(...){as.4vel(r3vel(...))}
   return(out)
 }
 
-`[.vec` <- function(x,i,j,...){
+`[.vec` <- function(x,i,j,drop=TRUE,...){
     a <- class(x)
     x <- unclass(x)
     if(missing(i) & !missing(j)){ # x[,j]
-      return(x[,j,drop=FALSE])
+      return(x[,j,drop=drop])
     } else if(!missing(i) & !missing(j)){  # x[i,j]
-      out <- x[i,j,drop=FALSE]
+      return(x[i,j,drop=drop])  # NB: unclassed
     } else if(missing(i) & missing(j)){  # x[]
-      out <- x  # NB unclassed
+      out <- x
     } else if(!missing(i) & missing(j)){  # meat of function: idiom x[i]; x[i,]
-      out <- x[i,,drop=FALSE]
+      out <- x[i,,drop=FALSE]  # NB: overrides method default
       if(ncol(out)==3){return(as.3vel(out))}
     } else {
       stop("this cannot happen")
@@ -226,31 +237,65 @@ r4vel <- function(...){as.4vel(r3vel(...))}
     return(out)
 }
 
-`[<-.vec` <- function(x,i,j,value){
-    a <- class(x)
+`[<-.3vel` <- function(x,i,j,value){
     x <- unclass(x)
-    if(missing(i) & missing(j)){  # x[]
-        x[] <- value
-    } else if(missing(i) & !missing(j)){ # x[,j]
+    value <- unclass(value)
+    if(missing(i) & missing(j)){  # x[] <- value
+      stop("'x[] <- value' meaningless for 3-velocities")
+    } else if(missing(i) & !missing(j)){ # x[,j] <- value
         x[,j] <- value
-    } else if(!missing(i) & !missing(j)){  # x[i,j]
+        return(as.3vel(x))  # NB checks for speed>c
+    } else if(!missing(i) & !missing(j)){  # x[i,j] <- value
         x[i,j] <- value
-    } else if(!missing(i) & missing(j)){  # x[i,] == x[i]
-        jj <- t(x)
-        jj[,i] <- t(value)
-        x <- t(jj)
-        if(ncol(x)==3){
-          x <- as.3vel(x)
-        } else if (ncol(x)==4){
-          x <- as.4vel(x)
-        } else {
-          stop("this should not happen")
+        return(x)  # NB no class, just a matrix
+    } else if(!missing(i) & missing(j)){  # x[i,];  x[i] <- value
+        if(length(value)==1){
+          if(value==0){
+          x[i,] <- 0
+          return(as.3vel(x))
+          } else {
+            stop("3vel scalar replacement method only defined for special value 0")
+          }
+        } else {  # length(value) > 0
+          jj <- t(x)
+          jj[,i] <- t(value)
+          x <- t(jj)
+          return(as.3vel(x))
         }
     } else {
-        stop("this cannot happen")
+      stop("3vel replacement error: this cannot happen")
     }
-    class(x) <- a
-    return(x)
+}
+  
+`[<-.4vel` <- function(x,i,j,value){
+    x <- unclass(x)
+    if(missing(i) & missing(j)){  # x[] <- value
+        stop("'x[] <- value' meaningless for 4-velocities")
+    } else if(missing(i) & !missing(j)){ # x[,j]
+        stop("'x[,j] <- value' meaningless for 4-velocities")
+    } else if(!missing(i) & !missing(j)){  # x[i,j]
+        x[i,j] <- value
+        return(x)
+    } else if(!missing(i) & missing(j)){  # x[i,] == x[i]
+        if(is.4vel(value)){
+            jj <- t(x)
+            jj[,i] <- t(value)
+            x <- t(jj)
+            return(as.4vel(x))
+        } else if(length(value)==1){
+            if(value==0){
+                x[i,1] <- 1
+                x[i,-1] <- 0
+                return(as.4vel(x))
+            } else {
+                stop("4vel scalar replacement method only defined for special value 0")
+            }
+        } else {  # length(value) > 0
+            stop("replacement value not acceptable")
+        }
+    } else {
+        stop("4vel replacement error: this cannot happen")
+    }
 }
   
 `equal3` <- function(u,v){
@@ -264,8 +309,7 @@ r4vel <- function(...){as.4vel(r3vel(...))}
   if(nargs() == 1){
     stop("Unary operator '", .Generic, "' is not implemented for 4vel objects")
   } else {
-    stop("Operator '", .Generic, "' is not implemented for 4vel objects.
-  Four velocities do not constitute a vector space.")
+    stop("Operator '", .Generic, "' is not implemented for 4vel objects (four-velocities do not constitute a vector space).")
   }
 }
 
@@ -356,8 +400,6 @@ r4vel <- function(...){as.4vel(r3vel(...))}
       } else {
         stop("inconsistent 4-velocity")
       }
-    } else if(is.vector(u)){
-      return(Recall(t(u)))
     } else {
       stop("not recognised")
     }
@@ -368,12 +410,8 @@ r4vel <- function(...){as.4vel(r3vel(...))}
 }
 
 `to3` <- function(U){  # takes a 4velocity, returns a 3vel
-  stopifnot(is.4vel(U))
-  if(all(is.consistent.4vel(U))){
+    stopifnot(is.4vel(U))
     return(as.3vel(sweep(U[, -1, drop = FALSE],1,U[,1],"/")))
-  } else {
-    stop("not consistent 4-velocity")
-  }
 }
 
 `inner4` <- function(U,V=U){
@@ -386,11 +424,25 @@ r4vel <- function(...){as.4vel(r3vel(...))}
     if(give){
         return(out)
     } else {
-        return(out<TOL*sol()^2)
+        return(abs(out)<TOL*sol()^2)
     }
 }
 
+`is.consistent.boost.galilean` <- function(L, give=FALSE, TOL=1e-10){
+  stopifnot(all(dim(L) == 4))
+  out <- crossprod(L[-1,-1])
+  if(give){
+    return(out)
+  } else {
+    return(
+        all(L[1,] == c(1,0,0,0)) &&
+        all(abs(out-diag(3)) < TOL)
+    )
+  }
+}
+
 `is.consistent.boost` <- function(L, give=FALSE, TOL=1e-10){
+  if(is.infinite(sol())){return(is.consistent.boost.galilean(L, give=give, TOL=TOL))}
   out <- quad.form(eta(),L) # should be eta()
   if(give){
     return(out)
@@ -399,7 +451,7 @@ r4vel <- function(...){as.4vel(r3vel(...))}
   }
 }
 
-`.seg` <- function(u,start=as.3vel(0), bold=5, ...){
+`my_seg` <- function(u,start=as.3vel(0), bold=5, ...){
   start <- unclass(start)[,1:2,drop=FALSE]
   u <- unclass(u)
   u <- u[,1:2,drop=FALSE]   # now a two-column matrix
@@ -425,16 +477,15 @@ r4vel <- function(...){as.4vel(r3vel(...))}
   }
 }
 
-
 `comm_fail1` <- function(u,v,bold=5,r=1){
     plot(NA, xlim=c(0,1), ylim=c(-0.2,1),
          type='n', asp=1,
          xlab='', ylab='', axes=FALSE,
          main="Failure of the parallelogram law")
-    .seg(u,start=0*u,col='purple',bold=bold)
-    .seg(u+v,start=u+v*0,col='black',bold=bold)
-    .seg((u+v)-u,start=u+v,col='red',bold=bold)
-    .seg(((u+v)-u)-v,start=(u+v)-u,col='blue',bold=bold)
+    my_seg(u,start=0*u,col='purple',bold=bold)
+    my_seg(u+v,start=u+v*0,col='black',bold=bold)
+    my_seg((u+v)-u,start=u+v,col='red',bold=bold)
+    my_seg(((u+v)-u)-v,start=(u+v)-u,col='blue',bold=bold)
     points(((u+v)-u)-v,pch=16,col='blue')
     legend("topright",lty=c(1,1,1,1,2),
            col=c("purple","black","red","blue","green"),
@@ -450,13 +501,13 @@ r4vel <- function(...){as.4vel(r3vel(...))}
          type='n',asp=1,
          xlab='',ylab='',axes=FALSE,
          main="Failure of the parallelogram law")
-    .seg(u,start=0*u,col='black',bold=bold)
-    .seg(u+v,start=u+v*0,col='blue',bold=bold)
+    my_seg(u,start=0*u,col='black',bold=bold)
+    my_seg(u+v,start=u+v*0,col='blue',bold=bold)
     
-    .seg(v,start=0*v,col='blue',bold=bold)
-    .seg(v+u,start=v,col='black',bold=bold)
+    my_seg(v,start=0*v,col='blue',bold=bold)
+    my_seg(v+u,start=v,col='black',bold=bold)
     
-    .seg(u+v,start=v+u,col='red',code=0,bold=bold)
+    my_seg(u+v,start=v+u,col='red',code=0,bold=bold)
     
     legend("topright",lty=c(1,1,1,2),
            col=c("black","blue","red","green"),
@@ -472,13 +523,13 @@ r4vel <- function(...){as.4vel(r3vel(...))}
     plot(c(0,0),c(-0.1,1),xlim=c(0,1),ylim=c(-0.3,1),type='n',
          asp=1,pty='m',xlab='',ylab='',
          axes=FALSE,main='Failure of associative property')
-    .seg(u,start=v*0,col='black',bold=bold)
-    .seg(u+(v+w),start=v*0+u,col='black',bold=bold)
+    my_seg(u,start=v*0,col='black',bold=bold)
+    my_seg(u+(v+w),start=v*0+u,col='black',bold=bold)
     
-    .seg(u+v,start=v*0,col='blue',bold=bold)
-    .seg((u+v)+w,start=u+v,col='blue',bold=bold)
+    my_seg(u+v,start=v*0,col='blue',bold=bold)
+    my_seg((u+v)+w,start=u+v,col='blue',bold=bold)
     
-    .seg(u+(v+w),start=(u+v)+w,col='red',bold=bold)
+    my_seg(u+(v+w),start=(u+v)+w,col='red',bold=bold)
     legend("topright",lty=c(1,1,1,2),col=c("black","blue","red","green"),legend=c("u+(v+w)","(u+v)+w","mismatch","c=1"))
     
     points(0,0,pch=16,cex=3)
@@ -512,7 +563,7 @@ r4vel <- function(...){as.4vel(r3vel(...))}
 `rot` <- function(u,v,space=TRUE){
   u <- as.3vel(u)
   v <- as.3vel(v)
-  out <- tcrossprod(crossprod(boost(-u-v), boost(u)),boost(v))
+  out <- boost(-u-v) %*% boost(u) %*% boost(v)
   if(space){
     return(out[2:4,2:4])
   } else {
@@ -520,8 +571,20 @@ r4vel <- function(...){as.4vel(r3vel(...))}
   }
 }
    
+`pureboost.galilean` <- function(L,tidy=TRUE){
+  stopifnot(is.consistent.boost.galilean(L))
+  out <- crossprod(orthog.galilean(L),L)
+  if(tidy){out[2:4,2:4] <- diag(3)}
+  return(out)
+}
+
+`orthog.galilean` <- function(L){
+  stopifnot(is.consistent.boost.galilean(L))
+  magic::adiag(1,L[-1,-1])
+}
+
 `pureboost` <- function(L,include_sol=TRUE){
-  if(is.infinite(sol())){return(L)}
+  if(is.infinite(sol())){return(pureboost.galilean(L))}
   if(include_sol){
     left <- ptm(TRUE)
     right <- ptm(FALSE)
@@ -531,18 +594,20 @@ r4vel <- function(...){as.4vel(r3vel(...))}
   }
     
   jj <- eigen(crossprod(quad.3form(L,left,right)))
-  quad.tform(sqrt(diag(jj$values)),jj$vectors) %>% quad.3form(right,left) %>% flob
+  flob(quad.3form(quad.tform(sqrt(diag(jj$values)),jj$vectors),right,left))
 }
 
 `orthog` <- function(L){
-  if(is.infinite(sol())){
-    L[1,1] <- 1
-    L[1,2:4] <- 0
-    L[2:4,1] <- 0
-    return(L)
-    }
-  L %<>% quad.3form(ptm(TRUE),ptm(FALSE))  # convert to natural units
-  tcrossprod(L, solve(pureboost(L,FALSE))) %>% flob
+  if(is.infinite(sol())){return(orthog.galilean(L))}
+  L <- quad.3form(L,ptm(TRUE),ptm(FALSE))  # convert to natural units
+  flob(tcrossprod(L, solve(pureboost(L,FALSE))))
 } 
 
+`as.matrix.3vel` <- function(x,...){unclass(x)}
+`as.matrix.4vel` <- function(x,...){unclass(x)}
 
+`cosines` <- function(u, drop=TRUE){
+  out <- sweep(unclass(u),1,speed(u),"/")
+  if(drop){out <- drop(out)}
+  return(out)
+}

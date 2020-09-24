@@ -45,8 +45,10 @@
         stop("not recognised")
     }
     
-    out <- cbind(1,out)
-    out %<>% sweep(1,E,`*`) %>% sweep(2,c(sol(),1,1,1), `/`) %>% as.4mom()
+    ## out <- cbind(1,out)
+    ## out %<>% sweep(1,E,`*`) %>% sweep(2,c(sol(),1,1,1), `/`) %>% as.4mom()
+    out <-
+        as.4mom(sweep(sweep(cbind(1,out),1,E,`*`),2,c(sol(),1,1,1), `/`))
     class(out) <- c(class(out),"nullvec")
     return(out)
 }
@@ -95,10 +97,10 @@
     if (.Generic == "+") {
       return(e1)
     } else if (.Generic == "-") {  # reflect about-face
-      e2[, -1] <- -e2[, -1]
+      e1[, -1] <- -e1[, -1]
       return(e1)
     } else {
-      stop("Unary operator '", .Generic, "' is not implemented for 4mom objects")
+      stop("Unary operator '", .Generic, "' should not exist for 4mom objects")
     }
   }
   

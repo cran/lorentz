@@ -12,15 +12,22 @@
 \alias{decompose}
 \alias{pureboost}
 \alias{orthog}
+\alias{pureboost.galilean}
+\alias{orthog.galilean}
 \alias{is.consistent.boost}
+\alias{is.consistent.boost.galilean}
+\alias{is.consistent.galilean.boost}
 \title{Lorentz transformations}
 \description{Lorenz transformations: boosts and rotations}
 \usage{
 boost(u)
 rot(u,v,space=TRUE)
 is.consistent.boost(L, give=FALSE, TOL=1e-10)
+is.consistent.boost.galilean(L, give=FALSE, TOL=1e-10)
 pureboost(L,include_sol=TRUE)
 orthog(L)
+pureboost.galilean(L, tidy=TRUE)
+orthog.galilean(L)
 }
 \arguments{
   \item{u,v}{Three-velocities, coerced to  class \code{3vel}}
@@ -34,28 +41,32 @@ orthog(L)
     the spatial component of the rotation matrix and \code{FALSE}
     meaning to return the full \eqn{4\times 4}{4x4} matrix
     transformation}
+  \item{tidy}{In \code{pureboost.galilean()}, Boolean with default
+    \code{TRUE} meaning to return a \dQuote{tidy} boost matrix with
+    spatial components forced to be a \eqn{3\times 3}{3x3} identity
+    matrix}
   \item{include_sol}{In function \code{pureboost()}, Boolean with
     default \code{TRUE} meaning to correctly account for the speed of
     light, and \code{FALSE} meaning to assume \eqn{c=1}. See details}
 }
 \value{
-  Function \code{boost()} returns a symmetric \eqn{4\times 4}{4*4}
+  Function \code{boost()} returns a \eqn{4\times 4}{4*4}
   matrix; function \code{rot()} returns an orthogonal matrix.
 }
 \details{
   Arguments \code{u,v} are coerced to three-velocities.
 
   A rotation-free Lorentz transformation is known as a \dfn{boost}
-  (sometimes a \dfn{pure boost}), and when expressed in matrix form is
-  symmetric.  Function \code{boost(u)} returns a \eqn{4\times 4}{4x4}
-  matrix giving the Lorentz transform of an arbitrary three-velocity
-  \code{u}.  Pure boost matrices are symmetrical, but do not commute in
-  general.
+  (sometimes a \dfn{pure boost}), here expressed in matrix form.  Pure
+  boost matrices are symmetric if \eqn{c=1}.  Function \code{boost(u)}
+  returns a \eqn{4\times 4}{4x4} matrix giving the Lorentz transform of
+  an arbitrary three-velocity \code{u}.
 
   Boosts can be successively applied with regular matrix multiplication.
-  However, composing two successive pure boosts does not return a pure
-  boost matrix: the product is not symmetric in general.  The resulting
-  matrix represents a \dfn{Lorentz transform}.
+  However, composing two successive pure boosts does not in general
+  return a pure boost matrix: the product is not symmetric in general.
+  Also note that boost matrices do not commute.  The resulting matrix
+  product represents a \dfn{Lorentz transform}.
 
   It is possible to decompose a Lorentz transform \eqn{L} into a pure
   boost and a spatial rotation.  Thus \eqn{L=OP} where \eqn{O} is an
@@ -64,10 +75,15 @@ orthog(L)
   speed of light is not equal to 1, the functions still work but can be
   confusing.
   
-  The composition of two pure Lorentz boosts is not necessarily pure.  If
-  we have two successive boosts corresponding to \eqn{u} and \eqn{v}, then
-  the composed boost may be decomposed into a pure boost of \code{boost(u+v)}
-  and a rotation of \code{rot(u,v)}.
+  Functions \code{pureboost.galilean()} and \code{orthog.galilean()} are
+  the Newtonian equivalents of \code{pureboost()} and \code{orthog()},
+  intended to be used when the speed of light is infinite (which causes
+  problems for the relativistic functions).
+
+  As noted above, the composition of two pure Lorentz boosts is not
+  necessarily pure.  If we have two successive boosts corresponding to
+  \eqn{u} and \eqn{v}, then the composed boost may be decomposed into a
+  pure boost of \code{boost(u+v)} and a rotation of \code{rot(u,v)}.
 
   The reason argument \code{include_sol} exists is that function
   \code{orthog()} needs to call \code{pureboost()} in an environment
@@ -124,8 +140,8 @@ rot(u,v,FALSE) \%*\% boost(v) \%*\% boost(u)
 boost(u+v)     # should be the same.
 
 
-orthog(boost(u) \%*\% boost(v)) - rot(u,v,FALSE)  # should be small
-pureboost(boost(v) \%*\% boost(u)) - boost(u+v)   # should be small
+orthog(boost(u) \%*\% boost(v)) - rot(u,v,FALSE)  # zero to numerical precision
+pureboost(boost(v) \%*\% boost(u)) - boost(u+v)   # ditto
 
 
 ## Define a random-ish Lorentz transform
@@ -145,13 +161,10 @@ is.consistent.boost(L)     # should be TRUE
 U <- orthog(L)
 P <- pureboost(L)
 
-L - U \%*\% P              # should be small (L = UP)
+L - U \%*\% P              # should be zero (L = UP)
 crossprod(U)               # should be identity (U is orthogonal)
-P - t(P)                   # should be small (P is symmetric)
+P - t(P)                   # should be zero (P is symmetric)
 
 ## First row of P should be a consistent 4-velocity:
-is.consistent.4vel(as.4vel(P[,1]))
-
-
-
+is.consistent.4vel(P[1,,drop=FALSE],give=TRUE)
 }

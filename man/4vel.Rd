@@ -38,11 +38,11 @@ to3(U)
   Given a four-vector \eqn{V}, function \code{inner4()} returns the
   Lorentz invariant \eqn{V^iV_i=\eta_{ij}V^iV^j}{V^i.V_i}.  This
   quantity is unchanged under Lorentz transforms.  Note that function
-  \code{inner()} works for any four-vector, not just four-velocities.
+  \code{inner4()} works for any four-vector, not just four-velocities.
   It will work for (eg) a four-displacement, a four-momentum vector or a
   four-frequency.  In electromagnetism, we could have a four-current or
   a four-potential.  If \eqn{U} is a four-velocity, then
-  \eqn{U^iU_i=-1}; if \eqn{U} is a 4-displacement, then \eqn{U^iU_i} is
+  \eqn{U^iU_i=-c^2}; if \eqn{U} is a 4-displacement, then \eqn{U^iU_i} is
   the squared interval.  If \eqn{P} is the four-momentum of a photon
   then \eqn{P^iP_i=0}.
 
@@ -50,15 +50,13 @@ to3(U)
   \code{as.3vel()} is given a four-velocity.
 
   Function \code{is.consistent.4vel()} checks for four-velocities being
-  consistent in the sense that \eqn{U^iU_i=-1}{U.U=-1}.  Giving this
-  function a vector as in \code{is.consistent.4vel(1:5)} will return an
-  error.
+  consistent in the sense that \eqn{U^iU_i=-c^2}{U.U=-c^2}.  Giving this
+  function a vector, for example, \code{is.consistent.4vel(1:5)}, will
+  return an error.
   
-  There is a class \dQuote{\code{4vel}}; but the emphasis is on
-  three-velocities.  Compare the functions documented here with
-  \code{boost()}, which returns a \eqn{4\times 4}{4*4} transformation
-  matrix (which also includes rotation information).
-
+  Compare the functions documented here with \code{boost()}, which
+  returns a \eqn{4\times 4}{4*4} transformation matrix (which also
+  includes rotation information).
 }
 \author{Robin K. S. Hankin}
 \seealso{\code{\link{boost}}}
@@ -67,9 +65,9 @@ to3(U)
 a <- r3vel(10)
 as.4vel(a)     # a four-velocity
 
-as.3vel(as.4vel(a))-a   # should be small
+as.3vel(as.4vel(a))-a   # zero to numerical precision
 
-inner4(as.4vel(a))   # should be -1
+inner4(as.4vel(a))   #  -1 to numerical precision
 
 stopifnot(all(is.consistent.4vel(as.4vel(a))))
 
@@ -78,9 +76,9 @@ stopifnot(all(is.consistent.4vel(as.4vel(a))))
 U <- as.4vel(r3vel(10))
 V <- as.4vel(r3vel(10))
 B <- boost(as.3vel(1:3/10))
-frame1dotprod <- inner4(U \%*\% B, V \%*\% B)
-frame2dotprod <- inner4(U \%*\% B, V \%*\% B)
 
-max(abs(frame1dotprod-frame2dotprod))  # should be small
+frame1dotprod <- inner4(U, V)
+frame2dotprod <- inner4(U \%*\% B, V \%*\% B)
+max(abs(frame1dotprod-frame2dotprod))  # zero to numerical precision
 
 }
