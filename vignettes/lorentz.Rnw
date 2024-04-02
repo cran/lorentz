@@ -27,8 +27,10 @@
 \Abstract{ Here I present the \pkg{lorentz} package for working with
   relativistic physics.  The package includes functionality for
   Lorentz transforms and Einsteinian three-velocity addition, which is
-  noncommutative and nonassociative.}
-
+  noncommutative and nonassociative.  It is available on CRAN at
+  \url{https://CRAN.R-project.org/package=lorentz}.  To cite the
+  \pkg{lorentz} package, use \citet{hankin2022_lorentz}.
+}
 
 \Keywords{Lorentz transform, Lorentz group, Lorentz law, Lorentz
   velocity addition, special relativity, relativistic physics,
@@ -84,9 +86,13 @@
 
 \begin{document}
 
+
 <<echo=FALSE,print=FALSE>>=
 library("lorentz")
+library("magrittr")
 @ 
+
+\hfill\includegraphics[width=1in]{\Sexpr{system.file("help/figures/lorentz.png",package="lorentz")}}
 
 \section{Introduction}
 
@@ -203,8 +209,10 @@ Lorentz transform is then
   \twomat{\gamma}{-\gamma v}{-\gamma v}{\gamma}\vvec{1}{1}=\vvec{\gamma-\gamma v}{\gamma-\gamma v}
   \end{equation*}
 
+
 So, in the language used above, I see a photon with unit energy, and
-my friend sees the photon with energy $\gamma(1-v)=\sqrt{1-v}<1$: the
+my friend sees the photon with energy
+$\gamma(1-v)=\sqrt{\frac{1-v}{1+v}}<1$, provided that $v>0$: the
 photon has less energy in his frame than mine because of Doppler
 redshifting.  It's worth doing the same analysis with a
 leftward-moving photon:
@@ -375,7 +383,10 @@ boost(u)
 @ 
 
 The boost matrix is not symmetrical, even though it is a pure boost,
-because $c\neq 1$.  Note how the transform is essentially the Galilean
+because $c\neq 1$.  
+
+
+Note how the transform is essentially the Galilean
 result, which is discussed below.
 
 \subsection{Changing units}
@@ -447,16 +458,24 @@ Then the familiar parallelogram law operates:
 u <- as.3vel(1:3)
 v <- as.3vel(c(-6,8,3))
 u+v
+v+u
 @ 
 
-The boost matrix is instructive:
+Above we see that composition of velocities is commutative, unlike the
+relativistic case.  The boost matrix is instructive:
 
 <<boostinfc>>=
 boost(u)
+boost(u+v)
+boost(u) %*% boost(v)
 @ 
 
-With an infinite speed of light, even ``large'' speeds have zero
-relativistic correction:
+Above, see how the boost matrix for the composed velocity of $u+v$
+does not have any rotational component, unlike the relativistic case
+[recall that \code{boost()} gives a {\em passive} transform, which is
+why the sign of the numbers in the first column is changed].  With an
+infinite speed of light, even ``large'' speeds have zero relativistic
+correction:
 
 <<gamm1google>>=
 gamm1(1e100)
@@ -481,6 +500,26 @@ orthog(B)
 pureboost(B)
 @ 
 
+
+Boost matrices can be applied to any four-vector.  Here I show how
+pure spatial displacements transform with an infinite light speed.
+
+<<infinitelightspeedspatialdisplacement>>=
+(u <- as.3vel(c(10,0,0))) # velocity of 10, parallel to x axis
+(B <- boost(u))
+d <- c(0,1,0,0) # displacement of distance one, parallel to the x-axis
+B %*% d
+@
+
+Above we see that a spatial displacement is the same for both
+observers.  We can similarly apply a boost to a temporal displacement:
+
+<<classicalboostspatial>>=
+d <- c(1,0,0,0) # displacement of one unit of time, no spatial component
+B %*% d
+@
+
+Above we see the result expected from classical mechanics.
 
 
 
@@ -608,7 +647,7 @@ It is easy to misapply matrix multiplication in this context.  Note
 carefully that the following natural idiom is {\bf incorrect}:
 
 <<>>=
-U %*% B  # Young Frankstein: Do Not Use This Brain!
+U %*% B  # Young Frankenstein: Do Not Use This Brain!
 ## The above idiom is incorrect.  See
 ## https://www.youtube.com/watch?v=m7-bMBuVmHo&t=1s
 ## (in particular @1:08) for a technical explanation of why 
@@ -830,25 +869,32 @@ A %>% tcrossprod(B) %>% reflect(m) %>% tcrossprod(solve(B)) %>% as.4mom
 
 \subsection{Disco ball}
 
-It is easy to define a disco ball:
+It is easy to define a disco ball, which is a sphere covered in
+mirrors.  For the purposes of exposition, we will use a rather shabby
+ball with only 7 mirrors:
 
 <<disco_ball>>=
-disco <- matrix(rnorm(3000),ncol=3) %>% sweep(1, sqrt(rowSums(.^2)),`/`)
-head(disco)
+dfun <- function(n){matrix(rnorm(n*3),ncol=3) %>% sweep(1, sqrt(rowSums(.^2)),`/`)}
+(disco <- dfun(7))
 @ 
 
-Then we define a null geodesic parallel to the x-axis, corresponding
-to photons, and reflect them in the disco ball:
+Then we define a unit-energy photon moving parallel to the x-axis, and
+reflect it in the disco ball:
 
 <<>>=
 p <- as.photon(c(1,0,0))
-reflect(p,head(disco))
+reflect(p,disco)
 @ 
 
-we might ask what percentage of photons are reflected towards the source:
+(above, \code{p} is a photon moving along the x-axis; standard R
+recycling rules imply that we effectively have one photon per mirror
+in \code{disco}.  See how the photons' energy is unchanged by the
+reflection).  We might ask what percentage of photons are reflected
+towards the source; but to do this we would need a somewhat more
+stylish disco ball, here with 1000 mirrors:
 
 <<disco_reflect_percentage>>=
- table(reflect(p,disco)[,2]>0) # should be TRUE with probability sqrt(0.5)
+table(reflect(p,dfun(1000))[,2]>0) # should be TRUE with probability sqrt(0.5)
 @ 
 
 (compare the expected value of $1000/\sqrt{2}\simeq 707$).  But it is
@@ -858,11 +904,14 @@ ball moves at 0.5c:
 
 <<relativistic_disco>>=
 B <- boost(as.3vel(c(0.5,0,0)))
-p %>% tcrossprod(B) %>% reflect(head(disco)) %>% tcrossprod(solve(B))
+p %>% tcrossprod(B) %>% reflect(disco) %>% tcrossprod(solve(B))
 @ 
 
-Note that a spinning disco ball would give the same (instantaneous)
-results.
+Above, note the high energy of the photon in the third row.  This is
+because the third mirror of \code{disco} is such that the photon hits
+it with grazing incidence; this means that the receding of the mirror
+is almost immaterial.  Note further that a spinning disco ball would
+give the same (instantaneous) results.
 
 \subsection{Mirrors and rotation-boost coupling}
 
@@ -1004,7 +1053,7 @@ f <- gyrfun(u9,v)
 f(x)
 @ 
 
-Note that the package vectorization is transparent when using syntatic sugar:
+Note that the package vectorization is transparent when using syntactic sugar:
 
 <<u9+x>>=
 u9+x

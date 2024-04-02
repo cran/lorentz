@@ -1,4 +1,4 @@
-\name{4mom}
+\name{fourmom}
 \alias{Ops.4mom}
 \alias{4mom}
 \alias{fourmom}
@@ -52,7 +52,7 @@ The function \code{Ops.4mom()} passes unary and binary arithmetic
 operators \dQuote{\code{+}}, \dQuote{\code{-}} and \dQuote{\code{*}} to
 the appropriate specialist function.
 
-The package is designed so that natural R idiom may be used for
+The package is designed so that natural \R idiom may be used for
 physically meaningful operations such as combining momenta of different
 objects, using the conservation of four-momentum.
 

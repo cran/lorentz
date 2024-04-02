@@ -5,6 +5,7 @@
 \alias{speedsquared}
 \alias{gam}
 \alias{gam.3vel}
+\alias{gam.3cel}
 \alias{gam.4vel}
 \alias{gam.default}
 \alias{gamm1}
@@ -22,6 +23,7 @@ speedsquared(u)
 gam(u)
 gamm1(u)
 \method{gam}{3vel}(u)
+\method{gam}{3cel}(u)
 \method{gam}{4vel}(u)
 \method{gamm1}{3vel}(u)
 \method{gamm1}{4vel}(u)
@@ -43,7 +45,7 @@ gam_ur(d)
 
   Function \code{gamm1(u)} returns the Lorentz factor minus 1, useful
   for slow speeds when larger accuracy is needed (much like
-  \code{expm1()}); to see the R idiom, type \dQuote{\code{gamm1.3vel}}
+  \code{expm1()}); to see the \R idiom, type \dQuote{\code{gamm1.3vel}}
   at the commandline.  Function \code{gamm1()} is intended to work with
   \code{3vel} objects or speeds.  The function will take a 4-velocity,
   but this is not recommended as accuracy is lost (all it does is return
@@ -51,10 +53,11 @@ gam_ur(d)
 
   Function \code{gam_ur()} is used for the ultrarelativistic case where
   speeds are very close to the speed of light (the function is named for
-  \dQuote{gamma, ultrarelativistic}).
-    
+  \dQuote{gamma, ultrarelativistic}).  Its argument \code{d} is the
+  deficit, that is, \eqn{c-v} where \eqn{v} is the speed of the
+  transformation.  Algebraically, \code{gam_ur(c-v) == gam(v)}, but if
+  \code{d} is small compared to \code{c} the result is more accurate.
 
-  
   Function \code{speedsquared(u)} returns the square of the speed of a
   \code{3vel} object.  Use this to avoid taking a needless square root.
 }

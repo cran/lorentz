@@ -2,12 +2,12 @@
 \alias{r3vel}
 \alias{r4vel}
 \alias{rboost}
-\title{Random relativstic velocities}
+\title{Random relativistic velocities}
 \description{
 Generates random three-velocities or four-velocities, optionally specifiying a magnitude
 }
 \usage{
-r3vel(n, r = NA)
+r3vel(n=7, r = NA)
 r4vel(...)
 rboost(r = NA)
 }
@@ -39,6 +39,8 @@ Returns a vector of three- or four- velocities.
   or unit sphere, but it is not hard either.
 }
 \examples{
+
+r3vel()
 
 a <- r3vel(10000)
 b <- r3vel(1000,0.8)

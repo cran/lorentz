@@ -2,18 +2,17 @@ The lorentz package: special relativity in R
 ================
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-
 <!-- badges: start -->
 
-[![Build
-Status](https://travis-ci.org/RobinHankin/lorentz.svg?branch=master)](https://travis-ci.org/RobinHankin/lorentz)
-[![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version/lorentz)](https://cran.r-project.org/package=lorentz)
+[![R-CMD-check](https://github.com/RobinHankin/lorentz/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/RobinHankin/lorentz/actions/workflows/R-CMD-check.yaml)
 [![Rdoc](https://www.rdocumentation.org/badges/version/lorentz)](https://www.rdocumentation.org/packages/lorentz)
 [![Codecov test
-coverage](https://codecov.io/gh/RobinHankin/lorentz/branch/master/graph/badge.svg)](https://codecov.io/gh/RobinHankin/lorentz/branch/master)
+coverage](https://app.codecov.io/gh/RobinHankin/lorentz/branch/master/graph/badge.svg)](https://app.codecov.io/gh/RobinHankin/lorentz/branch/master)
 <!-- badges: end -->
 
 # Overview
+
+<img src="../../../../Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/library/lorentz/help/figures/lorentz.png" width="20%" style="float:right; padding:10px" />
 
 The `lorentz` package furnishes some R-centric functionality for special
 relativity. Lorentz transformations of four-vectors are handled and some
@@ -56,10 +55,12 @@ default, this can be changed.
 ``` r
  u <- as.3vel(c(0.6,0,0))  # define a three-velocity, 0.6c to the right
  u
+#> A vector of three-velocities (speed of light = 1)
 #>        x y z
 #> [1,] 0.6 0 0
 
 as.4vel(u)    # convert to a four-velocity:
+#> A vector of four-velocities (speed of light = 1)
 #>         t    x y z
 #> [1,] 1.25 0.75 0 0
 gam(u)  # calculate the gamma term
@@ -133,6 +134,7 @@ are three-velocities or four-velocities:
  options(digits=3)
  # generate 5 random three-velocities:
  (u <- r3vel(5))
+#> A vector of three-velocities (speed of light = 1)
 #>           x       y      z
 #> [1,]  0.230  0.0719  0.314
 #> [2,] -0.311  0.4189 -0.277
@@ -146,6 +148,7 @@ are three-velocities or four-velocities:
  # add a velocity of 0.9c in the x-direction:
  v <- as.3vel(c(0.9,0,0))
  v+u
+#> A vector of three-velocities (speed of light = 1)
 #>          x      y      z
 #> [1,] 0.936  0.026  0.113
 #> [2,] 0.818  0.253 -0.168
@@ -156,6 +159,7 @@ are three-velocities or four-velocities:
 
  # convert u to a four-velocity:
  as.4vel(u)
+#> A vector of four-velocities (speed of light = 1)
 #>         t      x       y      z
 #> [1,] 1.09  0.250  0.0783  0.341
 #> [2,] 1.24 -0.385  0.5190 -0.343
@@ -166,6 +170,7 @@ are three-velocities or four-velocities:
  # use four-velocities to effect the same transformation:
  w <- as.4vel(u) %*% boost(-v)
  as.3vel(w)
+#> A vector of three-velocities (speed of light = 1)
 #>          x      y      z
 #> [1,] 0.936  0.026  0.113
 #> [2,] 0.818  0.253 -0.168
@@ -176,7 +181,7 @@ are three-velocities or four-velocities:
 
 # Three-velocities
 
-Three-velocites behave in interesting and counter-intuitive ways.
+Three-velocities behave in interesting and counter-intuitive ways.
 
 ``` r
  u <- as.3vel(c(0.2,0.4,0.1))   # single three-velocity
@@ -190,18 +195,21 @@ Then we can see that velocity addition is not commutative:
 
 ``` r
  u+v
+#> A vector of three-velocities (speed of light = 1)
 #>           x      y     z
 #> [1,]  0.702 -0.113 0.567
 #> [2,] -0.679  0.580 0.102
 #> [3,] -0.046  0.879 0.364
 #> [4,]  0.312  0.407 0.788
  v+u
+#> A vector of three-velocities (speed of light = 1)
 #>           x      y     z
 #> [1,]  0.624 -0.378 0.543
 #> [2,] -0.823  0.358 0.045
 #> [3,] -0.234  0.832 0.401
 #> [4,]  0.228  0.190 0.892
  (u+v)-(v+u)
+#> A vector of three-velocities (speed of light = 1)
 #>          x     y       z
 #> [1,] 0.243 0.506  0.1190
 #> [2,] 0.201 0.490  0.1206
@@ -215,6 +223,7 @@ any sense. Commutativity is replaced with gyrocommutatitivity:
 ``` r
 # Compare two different ways of calculating the same thing:
  (u+v) - gyr(u,v,v+u)  
+#> A vector of three-velocities (speed of light = 1)
 #>              x         y         z
 #> [1,]  3.53e-15 -1.20e-15  2.89e-15
 #> [2,]  2.89e-16 -3.18e-15 -1.08e-16
@@ -223,11 +232,12 @@ any sense. Commutativity is replaced with gyrocommutatitivity:
 
 # The other way round:
  (v+u) - gyr(v,u,u+v)
-#>             x         y         z
-#> [1,] 3.21e-15 -6.42e-16  2.89e-15
-#> [2,] 3.76e-15 -1.73e-15 -2.53e-16
-#> [3,] 1.47e-14 -4.07e-14 -2.03e-14
-#> [4,] 9.05e-15  6.43e-15  3.24e-14
+#> A vector of three-velocities (speed of light = 1)
+#>              x         y         z
+#> [1,]  3.21e-15 -6.42e-16  2.89e-15
+#> [2,] -1.45e-15  1.73e-15  1.08e-16
+#> [3,]  1.47e-14 -4.07e-14 -2.03e-14
+#> [4,]  9.05e-15  6.43e-15  3.24e-14
 ```
 
 (that is, zero to numerical accuracy)
@@ -239,6 +249,7 @@ is not the case:
 
 ``` r
  ((u+v)+w) - (u+(v+w))
+#> A vector of three-velocities (speed of light = 1)
 #>             x       y         z
 #> [1,]  0.00613  0.0794 -0.001467
 #> [2,] -0.11096 -0.1508 -0.031226
@@ -251,12 +262,14 @@ replaced with gyroassociativity:
 
 ``` r
  (u+(v+w)) - ((u+v)+gyr(u,v,w))
-#>      x         y         z
-#> [1,] 0  8.16e-17 -6.53e-16
-#> [2,] 0 -9.49e-16  0.00e+00
-#> [3,] 0  3.21e-15  1.60e-15
-#> [4,] 0  0.00e+00  0.00e+00
+#> A vector of three-velocities (speed of light = 1)
+#>             x        y         z
+#> [1,]  0.0e+00 8.16e-17 -6.53e-16
+#> [2,] -3.8e-15 2.85e-15  9.49e-16
+#> [3,]  0.0e+00 3.21e-15  1.60e-15
+#> [4,]  0.0e+00 0.00e+00  0.00e+00
  ((u+v)+w) - (u+(v+gyr(v,u,w)))
+#> A vector of three-velocities (speed of light = 1)
 #>              x         y         z
 #> [1,]  0.00e+00  4.03e-17 -1.29e-15
 #> [2,] -1.81e-15  9.07e-16  0.00e+00
@@ -270,10 +283,10 @@ replaced with gyroassociativity:
 
 The most concise reference is
 
-  - A. A. Ungar 2006. *Thomas precession: a kinematic effect of the
-    algebra of Einstein’s velocity addition law. Comments on "Deriving
-    relativistic momentum and energy: II, Three-dimensional case*.
-    European Journal of Physics, 27:L17-L20
+- A. A. Ungar 2006. *Thomas precession: a kinematic effect of the
+  algebra of Einstein’s velocity addition law. Comments on “Deriving
+  relativistic momentum and energy: II, Three-dimensional case*.
+  European Journal of Physics, 27:L17-L20
 
 # Further information
 
