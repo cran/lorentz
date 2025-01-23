@@ -14,7 +14,7 @@
 
 
 %% just as usual
-\author{Robin K. S. Hankin\\Auckland University of Technology}
+\author{Robin K. S. Hankin\\University of Stirling}
 \title{Special relativity in R: introducing the \pkg{lorentz} package}
 %\VignetteIndexEntry{The lorentz package}
 
@@ -60,7 +60,7 @@
 %% in the following format:
 \Address{
   Robin K. S. Hankin\\%\orcid{https://orcid.org/0000-0001-5982-0415}\\
-  Auckland University of Technology\\
+  University of Stirling\\
   E-mail: \email{hankin.robin@gmail.com}
 }
 %% It is also possible to add a telephone and fax number
@@ -674,7 +674,7 @@ D             # only one nonzero component
 
 The stress-energy tensor is usually written with two upstairs
 (contravariant) indices, as in~$T^{\alpha\beta}$; it may be
-transformed using the \code{transform_uu()} function: package:
+transformed using the \code{transform_uu()} function: 
 
 <<>>=
 B <- boost(as.3vel(c(0.0,0.8,0.0)))
